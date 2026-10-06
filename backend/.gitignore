@@ -1,0 +1,46 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+
+# Environment Variables
+.env
+.env.*
+
+# Python Cache
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.mypy_cache/
+
+# IDE
+.vscode
+.idea/
+
+# Logs
+logs/
+*.log
+
+# Test Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+#Testing artifacts
+test.db
+
+# Local documentation (dev notes, knowledge-transfer docs)
+readme/
+
+app/integration/langGraph/tests_pipeline.py
+
+
+storage/whisper/
+storage/uploads/
+storage/reports/
+*.mp4
+*.mp3
+*.wav

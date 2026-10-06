@@ -1,0 +1,240 @@
+name: CI/CD Pipeline
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+env:
+  IMAGE_NAME: interview-ai-backend
+  REGISTRY: ghcr.io
+
+jobs:
+
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff mypy
+
+      - name: Ruff lint
+        run: ruff check .
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Mypy type check
+        run: mypy app/
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: ai_interview_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: root
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ai_interview_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov httpx fakeredis
+
+      - name: Run tests with coverage
+        env:
+          ENV: test
+          DB_USER: postgres
+          DB_PASSWORD: root
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_NAME: ai_interview_test
+          REDIS_URL: redis://localhost:6379/1
+          BROKER_URL: redis://localhost:6379/1
+          SECRET_KEY: test-secret-key-for-testing-only
+          ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+          REFRESH_TOKEN_EXPIRE_DAYS: "7"
+          VERIFICATION_TOKEN_EXPIRE_MINUTES: "60"
+          GEMINI_API_KEYS: fake-key-1,fake-key-2
+          COOKIE_SECURE: "False"
+          COOKIE_HTTPONLY: "True"
+          COOKIE_SAMESITE: lax
+          FFMPEG_PATH: ffmpeg
+          FFPROBE_PATH: ffprobe
+          AWS_S3_BUCKET_NAME: test-bucket
+          AWS_ACCESS_KEY_ID: AKIATEST
+          AWS_SECRET_ACCESS_KEY: test-secret
+          AWS_REGION: us-east-1
+          SMTP_HOST: smtp.test.local
+          SMTP_PORT: "587"
+          SMTP_USER: test@test.local
+          SMTP_PASSWORD: test-password
+          FROM_EMAIL: test@test.local
+          CORS_ORIGINS: '["http://localhost:3000"]'
+          ENABLE_CHECKPOINTING: "False"
+          CONCURRENCY_BACKEND: local
+          LLM_CONCURRENCY_LIMIT: "5"
+          MAX_RETRIES: "1"
+          ENABLE_PROVIDER_FALLBACK: "False"
+          OPENAI_API_KEY: sk-test-fake
+          ANTHROPIC_API_KEY: sk-ant-test-fake
+          GROQ_API_KEY: gsk_fake_test_key
+        run: |
+          python -m pytest tests/ -v --cov=app --cov-report=xml --cov-report=term --junitxml=junit.xml
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: junit.xml
+          retention-days: 14
+
+  docker-build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Audit dependencies
+        run: pip-audit -r requirements.txt
+
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+    needs: [lint, test, docker-build, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/interview-ai
+
+            echo "Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "Rebuilding and restarting containers..."
+            docker compose -f docker-compose.yml up -d --build
+
+            echo "Waiting for health check..."
+            sleep 10
+            curl -sf http://localhost:8000/ || {
+              echo "Health check failed. Rolling back..."
+              git reset --hard HEAD~1
+              docker compose -f docker-compose.yml up -d --build
+              exit 1
+            }
+
+            echo "Cleaning up old images..."
+            docker image prune -f
+
+            echo "Deployment complete."

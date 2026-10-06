@@ -1,0 +1,160 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# docker-compose.yml — Full Stack (Backend + Frontend)
+#
+# Reuses the backend stack from backend/docker-compose.yml (PostgreSQL,
+# Redis, FastAPI, Celery) and adds the Next.js frontend in production mode.
+#
+# Usage:
+#   docker compose up --build
+#
+# Services on host:
+#   • Frontend       → http://localhost:3000
+#   • Backend API    → http://localhost:8000
+#   • PostgreSQL     → localhost:5432
+#   • Redis          → localhost:6379
+# ══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # Backend Stack
+  # ═════════════════════════════════════════════════════════════════════════
+
+  postgres:
+    image: postgres:17
+    container_name: interview_ai_postgres
+
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env
+
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: interview_ai_redis
+
+    restart: unless-stopped
+
+    command: redis-server --save "" --appendonly no
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    image: interview-ai-backend:latest
+
+    container_name: interview_ai_backend
+
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - storage_data:/app/storage
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+
+  celery:
+    image: interview-ai-backend:latest
+
+    container_name: interview_ai_celery
+
+    restart: unless-stopped
+
+    command: >
+      celery
+      -A app.celery_app
+      worker
+      --loglevel=info
+      --concurrency=2
+      --without-heartbeat
+      --without-gossip
+      --without-mingle
+
+    env_file:
+      - ./backend/.env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    volumes:
+      - storage_data:/app/storage
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+
+  # ═════════════════════════════════════════════════════════════════════════
+  # Frontend
+  # ═════════════════════════════════════════════════════════════════════════
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # The browser calls the backend on the host port, so this must be a
+        # URL reachable from the browser, not "backend".
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:${BACKEND_PORT:-8000}
+
+    image: interview-ai-frontend:latest
+
+    container_name: interview_ai_frontend
+
+    restart: unless-stopped
+
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+    depends_on:
+      - backend
+
+# ═════════════════════════════════════════════════════════════════════════
+# Volumes
+# ═════════════════════════════════════════════════════════════════════════
+
+volumes:
+
+  postgres_data:
+
+  redis_data:
+
+  storage_data:
+
+  uploads_data:
+
+  logs_data:

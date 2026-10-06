@@ -1,0 +1,288 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+   Theme tokens — written onto :root at runtime by ThemeProvider / init script.
+   These are the canonical fallbacks (night: black & grey monochrome) and
+   mirror src/styles/theme.ts darkTheme.
+   =========================================================================== */
+:root {
+  --background: #000000;
+  --surface: #0a0a0a;
+  --surface-hover: #1a1a1a;
+  --elevated: #181818;
+  --card: #111111;
+  --border: transparent;
+  --border-strong: transparent;
+
+  --text-primary: #f5f5f5;
+  --text-secondary: #b3b3b3;
+  --text-muted: #808080;
+  --text-inverse: #0a0a0a;
+
+  --accent: #555555;
+  --accent-soft: rgba(255, 255, 255, 0.07);
+  --accent-soft-border: transparent;
+
+  --btn-primary-from: #dadada;
+  --btn-primary-to: #f5f5f5;
+  --btn-primary-text: #0a0a0a;
+  --btn-secondary-bg: #181818;
+  --btn-secondary-border: transparent;
+  --btn-secondary-text: #f5f5f5;
+
+  --input-bg: #181818;
+  --input-border: transparent;
+  --input-text: #f5f5f5;
+  --input-placeholder: #707070;
+
+  --shadow: 0 4px 8px rgba(255, 255, 255, 0.08),
+    0 6px 12px rgba(255, 255, 255, 0.05);
+  --shadow-glow: 0 0 32px -12px rgba(140, 140, 140, 0.14);
+  --ring: rgba(128, 128, 128, 0.7);
+
+  --popover: #181818;
+  --popover-foreground: #f5f5f5;
+  --foreground: #f5f5f5;
+  --muted-foreground: #808080;
+  --accent-foreground: #f5f5f5;
+
+  --gradient-start: #3d3d3d;
+  --gradient-end: #e5e5e5;
+  --gradient-hero: radial-gradient(
+    ellipse at top left,
+    #161616 0%,
+    #0a0a0a 38%,
+    #000000 75%
+  );
+  --gradient-radial: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 35%,
+    transparent 68%
+  );
+
+  --success: #5fae8d;
+  --success-soft: rgba(95, 174, 141, 0.08);
+  --success-border: rgba(95, 174, 141, 0.2);
+  --warning: #c99a4e;
+  --warning-soft: rgba(201, 154, 78, 0.08);
+  --warning-border: rgba(201, 154, 78, 0.2);
+  --danger: #c4787a;
+  --danger-soft: rgba(196, 120, 122, 0.08);
+  --danger-border: rgba(196, 120, 122, 0.2);
+  --info: #5fa8b8;
+  --info-soft: rgba(95, 168, 184, 0.08);
+  --info-border: rgba(95, 168, 184, 0.2);
+}
+
+/* ===========================================================================
+   Tailwind v4 theme mappings — exposes the custom properties as utilities.
+   e.g. bg-background, text-primary, border-default, bg-card, text-muted…
+   =========================================================================== */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-elevated: var(--elevated);
+  --color-card: var(--card);
+  /* NOTE: color names must match the utility suffix used in components.
+     `--color-border-default` would only generate `border-border-default`,
+     so these are named `default` / `strong` to make `border-default` and
+     `border-strong` valid utilities. */
+  --color-default: var(--border);
+  --color-strong: var(--border-strong);
+
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-inverse: var(--text-inverse);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-border: var(--accent-soft-border);
+
+  --color-btn-primary-from: var(--btn-primary-from);
+  --color-btn-primary-to: var(--btn-primary-to);
+  --color-btn-primary-text: var(--btn-primary-text);
+  --color-btn-secondary-bg: var(--btn-secondary-bg);
+  --color-btn-secondary-border: var(--btn-secondary-border);
+  --color-btn-secondary-text: var(--btn-secondary-text);
+
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-text: var(--input-text);
+  --color-input-placeholder: var(--input-placeholder);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-border: var(--info-border);
+
+  --color-popover: var(--elevated);
+  --color-popover-foreground: var(--text-primary);
+  --color-foreground: var(--text-primary);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent-foreground: var(--text-inverse);
+  --color-border: var(--border);
+
+  --shadow-shadow: var(--shadow);
+  --shadow-glow: var(--shadow-glow);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ===========================================================================
+   Base
+   =========================================================================== */
+html {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  background-image: var(--gradient-radial);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth, opt-in theme transitions (added after first paint) */
+.theme-transitions,
+.theme-transitions * {
+  transition:
+    background-color 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    box-shadow 300ms ease,
+    fill 300ms ease,
+    stroke 300ms ease;
+}
+
+/* The theme toggle runs its own synchronized 450ms animation. Exempt it from
+   the global 300ms theme-swap transition so the thumb glide and icon color
+   stay perfectly in sync (no snapping). Higher specificity wins over
+   `.theme-transitions *`. */
+.theme-transitions [role="switch"],
+.theme-transitions [role="switch"] * {
+  transition-property: transform, opacity, color, background-color,
+    border-color, box-shadow, fill, stroke, filter !important;
+  transition-duration: 450ms !important;
+  transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1) !important;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+/* Custom scrollbars — standalone neutral grey so they remain visible even
+   when the night theme's border tokens are transparent. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128, 128, 128, 0.45) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, 0.45);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(128, 128, 128, 0.7);
+}
+
+/* Focus visibility */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ===========================================================================
+   Landing effects
+   =========================================================================== */
+
+/* Gentle vertical drift for the ambient background blobs. */
+@keyframes auth-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+/* Floating stat pills around the hero / dashboard mockups. */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-slow {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/* Brief highlight pulse applied to smooth-scroll targets. */
+@keyframes auth-scroll-highlight {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow:
+      0 0 0 4px var(--ring),
+      0 0 50px -5px var(--shadow-glow);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.scroll-highlight {
+  animation: auth-scroll-highlight 1.4s ease-out;
+  border-radius: 1.5rem;
+}
+
+/* Calm everything down when the user prefers reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-highlight {
+    animation: none;
+  }
+}

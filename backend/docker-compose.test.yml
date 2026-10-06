@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+
+  postgres_test:
+    image: postgres:17
+    container_name: interview_ai_test_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_interview_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_interview_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis_test:
+    image: redis:7-alpine
+    container_name: interview_ai_test_redis
+    restart: unless-stopped
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: interview_ai_test_runner
+    depends_on:
+      postgres_test:
+        condition: service_healthy
+      redis_test:
+        condition: service_healthy
+    environment:
+      ENV: test
+      DB_USER: postgres
+      DB_PASSWORD: root
+      DB_HOST: postgres_test
+      DB_PORT: "5432"
+      DB_NAME: ai_interview_test
+      REDIS_URL: redis://redis_test:6379/1
+      REDIS_DATA_EXPIRE: "3600"
+      BROKER_URL: redis://redis_test:6379/1
+      SECRET_KEY: test-secret-key-for-testing-only
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      REFRESH_TOKEN_EXPIRE_DAYS: "7"
+      VERIFICATION_TOKEN_EXPIRE_MINUTES: "60"
+      GEMINI_API_KEYS: fake-key-1,fake-key-2
+      COOKIE_SECURE: "False"
+      COOKIE_HTTPONLY: "True"
+      COOKIE_SAMESITE: lax
+      FFMPEG_PATH: ffmpeg
+      FFPROBE_PATH: ffprobe
+      STORAGE_DIR: storage
+      SMTP_HOST: smtp.test.local
+      SMTP_PORT: "587"
+      SMTP_USER: test@test.local
+      SMTP_PASSWORD: test-password
+      FROM_EMAIL: test@test.local
+      CORS_ORIGINS: '["http://localhost:3000"]'
+      ENABLE_CHECKPOINTING: "False"
+      CONCURRENCY_BACKEND: local
+      LLM_CONCURRENCY_LIMIT: "5"
+      MAX_RETRIES: "1"
+      ENABLE_PROVIDER_FALLBACK: "False"
+      OPENAI_API_KEY: sk-test-fake
+      ANTHROPIC_API_KEY: sk-ant-test-fake
+      GROQ_API_KEY: gsk_fake_test_key

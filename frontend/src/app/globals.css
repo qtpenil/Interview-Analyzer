@@ -1,0 +1,542 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+   Theme tokens — written onto :root at runtime by ThemeProvider / init script.
+   These are the canonical fallbacks (night: black & grey monochrome) and
+   mirror src/styles/theme.ts darkTheme.
+   =========================================================================== */
+:root {
+  --background: #000000;
+  --surface: #0a0a0a;
+  --surface-hover: #1a1a1a;
+  --elevated: #181818;
+  --card: #111111;
+  --border: transparent;
+  --border-strong: transparent;
+
+  --text-primary: #f5f5f5;
+  --text-secondary: #b3b3b3;
+  --text-muted: #808080;
+  --text-inverse: #0a0a0a;
+
+  --accent: #555555;
+  --accent-soft: rgba(255, 255, 255, 0.07);
+  --accent-soft-border: transparent;
+
+  --btn-primary-from: #dadada;
+  --btn-primary-to: #f5f5f5;
+  --btn-primary-text: #0a0a0a;
+  --btn-secondary-bg: #181818;
+  --btn-secondary-border: transparent;
+  --btn-secondary-text: #f5f5f5;
+
+  --input-bg: #181818;
+  --input-border: transparent;
+  --input-text: #f5f5f5;
+  --input-placeholder: #707070;
+
+  --shadow: 0 4px 8px rgba(255, 255, 255, 0.08),
+    0 6px 12px rgba(255, 255, 255, 0.05);
+  --shadow-glow: 0 0 32px -12px rgba(140, 140, 140, 0.14);
+  --ring: rgba(128, 128, 128, 0.7);
+
+  --popover: #181818;
+  --popover-foreground: #f5f5f5;
+  --foreground: #f5f5f5;
+  --muted-foreground: #808080;
+  --accent-foreground: #f5f5f5;
+
+  --gradient-start: #3d3d3d;
+  --gradient-end: #e5e5e5;
+  --gradient-hero: radial-gradient(
+    ellipse at top left,
+    #161616 0%,
+    #0a0a0a 38%,
+    #000000 75%
+  );
+  --gradient-radial: radial-gradient(
+    circle at top,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.02) 35%,
+    transparent 68%
+  );
+
+  --success: #5fae8d;
+  --success-soft: rgba(95, 174, 141, 0.08);
+  --success-border: rgba(95, 174, 141, 0.2);
+  --warning: #c99a4e;
+  --warning-soft: rgba(201, 154, 78, 0.08);
+  --warning-border: rgba(201, 154, 78, 0.2);
+  --danger: #c4787a;
+  --danger-soft: rgba(196, 120, 122, 0.08);
+  --danger-border: rgba(196, 120, 122, 0.2);
+  --info: #5fa8b8;
+  --info-soft: rgba(95, 168, 184, 0.08);
+  --info-border: rgba(95, 168, 184, 0.2);
+}
+
+/* ===========================================================================
+   Tailwind v4 theme mappings — exposes the custom properties as utilities.
+   e.g. bg-background, text-primary, border-default, bg-card, text-muted…
+   =========================================================================== */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-elevated: var(--elevated);
+  --color-card: var(--card);
+  /* NOTE: color names must match the utility suffix used in components.
+     `--color-border-default` would only generate `border-border-default`,
+     so these are named `default` / `strong` to make `border-default` and
+     `border-strong` valid utilities. */
+  --color-default: var(--border);
+  --color-strong: var(--border-strong);
+
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-inverse: var(--text-inverse);
+
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-border: var(--accent-soft-border);
+
+  --color-btn-primary-from: var(--btn-primary-from);
+  --color-btn-primary-to: var(--btn-primary-to);
+  --color-btn-primary-text: var(--btn-primary-text);
+  --color-btn-secondary-bg: var(--btn-secondary-bg);
+  --color-btn-secondary-border: var(--btn-secondary-border);
+  --color-btn-secondary-text: var(--btn-secondary-text);
+
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-text: var(--input-text);
+  --color-input-placeholder: var(--input-placeholder);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-border: var(--warning-border);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-border: var(--danger-border);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-border: var(--info-border);
+
+  --color-popover: var(--elevated);
+  --color-popover-foreground: var(--text-primary);
+  --color-foreground: var(--text-primary);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent-foreground: var(--text-inverse);
+  --color-border: var(--border);
+
+  --shadow-shadow: var(--shadow);
+  --shadow-glow: var(--shadow-glow);
+
+  /* Custom container step beyond the default 7xl (80rem) scale */
+  --container-8xl: 88rem;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ===========================================================================
+   Base
+   =========================================================================== */
+html {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  background-image: var(--gradient-radial);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth, opt-in theme transitions (added after first paint) */
+.theme-transitions,
+.theme-transitions * {
+  transition:
+    background-color 300ms ease,
+    border-color 300ms ease,
+    color 300ms ease,
+    box-shadow 300ms ease,
+    fill 300ms ease,
+    stroke 300ms ease;
+}
+
+/* The theme toggle runs its own synchronized 450ms animation. Exempt it from
+   the global 300ms theme-swap transition so the thumb glide and icon color
+   stay perfectly in sync (no snapping) on every page, including the landing
+   navbar. Higher specificity wins over `.theme-transitions *`. */
+.theme-transitions [role="switch"],
+.theme-transitions [role="switch"] * {
+  transition-property: transform, opacity, color, background-color,
+    border-color, box-shadow, fill, stroke, filter !important;
+  transition-duration: 450ms !important;
+  transition-timing-function: cubic-bezier(0.65, 0, 0.35, 1) !important;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+/* Custom scrollbars — standalone neutral grey so they remain visible even
+   when the night theme's border tokens are transparent. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(128, 128, 128, 0.45) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, 0.45);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(128, 128, 128, 0.7);
+}
+
+/* Focus visibility */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ===========================================================================
+   Auth screen effects
+   =========================================================================== */
+@keyframes auth-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-grid-pan {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 44px;
+  }
+}
+
+@keyframes auth-logo-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px -4px var(--shadow-glow);
+  }
+  50% {
+    box-shadow: 0 0 36px -2px var(--shadow-glow);
+  }
+}
+
+@keyframes auth-shine {
+  from {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  to {
+    transform: translateX(220%) skewX(-20deg);
+  }
+}
+
+@keyframes auth-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes auth-scroll-highlight {
+  0% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+  30% {
+    box-shadow:
+      0 0 0 4px var(--ring),
+      0 0 50px -5px var(--shadow-glow);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.scroll-highlight {
+  animation: auth-scroll-highlight 1.4s ease-out;
+  border-radius: 1.5rem;
+}
+
+/* Mobile slide-in for the sidebar drawer */
+@keyframes slide-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
+}
+
+/* ===========================================================================
+   Topic flip card (Topics & Concepts Coverage)
+   Faces are stacked via grid cells so the container height stays dynamic
+   (sized to the tallest face) while still allowing the 3D flip.
+
+   Flip is a plain two-state swing: open rotates 0deg -> 180deg, close
+   rotates 180deg -> 0deg. A mid-turn scale dip keeps the physical
+   "lift and turn" feel. Alternating -a/-b animation names let consecutive
+   flips restart cleanly.
+   =========================================================================== */
+.flip-scene {
+  perspective: 1600px;
+}
+
+.flip-inner {
+  display: grid;
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.flip-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  grid-area: 1 / 1;
+  min-width: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.flip-face-back {
+  transform: rotateY(180deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .flip-inner.flip-anim {
+    animation-duration: 620ms;
+    animation-fill-mode: both;
+  }
+
+  .flip-inner.flip-anim.flip-open-a {
+    animation-name: flip-open-a;
+  }
+
+  .flip-inner.flip-anim.flip-open-b {
+    animation-name: flip-open-b;
+  }
+
+  .flip-inner.flip-anim.flip-close-a {
+    animation-name: flip-close-a;
+  }
+
+  .flip-inner.flip-anim.flip-close-b {
+    animation-name: flip-close-b;
+  }
+}
+
+/* Timing lives INSIDE each keyframe segment so rotational velocity stays
+   continuous through the 90deg midpoint (ease-in arrives fast, ease-out
+   departs fast) — no decel/re-accel hitch at the halfway stop. */
+@keyframes flip-open-a {
+  0% {
+    transform: rotateY(0deg) scale(1);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.45);
+  }
+  50% {
+    transform: rotateY(90deg) scale(0.94);
+    animation-timing-function: cubic-bezier(0.1, 0.55, 0.5, 1);
+  }
+  100% {
+    transform: rotateY(180deg) scale(1);
+  }
+}
+
+@keyframes flip-open-b {
+  0% {
+    transform: rotateY(0deg) scale(1);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.45);
+  }
+  50% {
+    transform: rotateY(90deg) scale(0.94);
+    animation-timing-function: cubic-bezier(0.1, 0.55, 0.5, 1);
+  }
+  100% {
+    transform: rotateY(180deg) scale(1);
+  }
+}
+
+@keyframes flip-close-a {
+  0% {
+    transform: rotateY(180deg) scale(1);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.45);
+  }
+  50% {
+    transform: rotateY(90deg) scale(0.94);
+    animation-timing-function: cubic-bezier(0.1, 0.55, 0.5, 1);
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+  }
+}
+
+@keyframes flip-close-b {
+  0% {
+    transform: rotateY(180deg) scale(1);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.45);
+  }
+  50% {
+    transform: rotateY(90deg) scale(0.94);
+    animation-timing-function: cubic-bezier(0.1, 0.55, 0.5, 1);
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===========================================================================
+   Processing / Analysis tracker effects
+   =========================================================================== */
+
+/* Moving sheen across the active portion of the progress bar. GPU-friendly
+   (transform-only), subtle, and disabled under prefers-reduced-motion. */
+@keyframes tracker-sheen {
+  0% {
+    transform: translateX(-130%) skewX(-20deg);
+  }
+  60%,
+  100% {
+    transform: translateX(420%) skewX(-20deg);
+  }
+}
+
+.tracker-sheen {
+  animation: tracker-sheen 3.6s ease-in-out infinite;
+}
+
+/* Expanding ring behind an active stage indicator — communicates "working". */
+@keyframes tracker-pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+.tracker-pulse-ring {
+  animation: tracker-pulse-ring 1.8s cubic-bezier(0.2, 0.6, 0.3, 1) infinite;
+}
+
+/* Slow breathing glow on the active stage node. */
+@keyframes tracker-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.tracker-breathe {
+  animation: tracker-breathe 2.4s ease-in-out infinite;
+}
+
+/* Subtle blinking caret for the typed status line. */
+@keyframes tracker-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.tracker-caret {
+  animation: tracker-caret 1s step-end infinite;
+}
+
+/* Fade/slide used when a new status message begins typing. */
+@keyframes tracker-message-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tracker-message-in {
+  animation: tracker-message-in 0.35s ease-out;
+}
+
+/* Respect reduced-motion: kill the decorative looping animations so the UI
+   is calm (progress still updates via JS state, just without shimmer/pulse). */
+@media (prefers-reduced-motion: reduce) {
+  .tracker-sheen,
+  .tracker-pulse-ring,
+  .tracker-breathe,
+  .tracker-caret {
+    animation: none;
+  }
+  .tracker-message-in {
+    animation-duration: 0.001s;
+    animation-name: none;
+  }
+}

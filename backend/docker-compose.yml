@@ -1,0 +1,130 @@
+version: "3.9"
+
+services:
+
+  # ===========================================================================
+  # PostgreSQL
+  # ===========================================================================
+  postgres:
+    image: postgres:17
+    container_name: interview_ai_postgres
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # Redis
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: interview_ai_redis
+
+    restart: unless-stopped
+
+    command: redis-server --save "" --appendonly no
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+  # ===========================================================================
+  # FastAPI Backend
+  # ===========================================================================
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: interview-ai-backend:latest
+
+    container_name: interview_ai_backend
+
+    restart: unless-stopped
+
+    env_file:
+      - .env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - storage_data:/app/storage
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+
+  # ===========================================================================
+  # Celery Worker
+  # ===========================================================================
+  celery:
+    image: interview-ai-backend:latest
+
+    container_name: interview_ai_celery
+
+    restart: unless-stopped
+
+    command: >
+      celery
+      -A app.celery_app
+      worker
+      --loglevel=info
+      --concurrency=2
+      --without-heartbeat
+      --without-gossip
+      --without-mingle
+
+    env_file:
+      - .env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    volumes:
+      - storage_data:/app/storage
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+
+# =============================================================================
+# Volumes
+# =============================================================================
+
+volumes:
+
+  postgres_data:
+
+  redis_data:
+
+  storage_data:
+
+  uploads_data:
+
+  logs_data:

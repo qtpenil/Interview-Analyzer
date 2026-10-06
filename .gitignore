@@ -1,0 +1,46 @@
+# Root .gitignore for Interview Analyzer Monorepo
+
+# Environment variables & secrets (CRITICAL)
+.env
+.env.*
+!.env.example
+
+# Node dependencies & builds
+node_modules/
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Python virtual environment & cache
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.log
+logs/
+
+# Local media, uploads, storage
+storage/
+uploads/
+*.mp4
+*.mp3
+*.wav
+
+# Operating system & IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
